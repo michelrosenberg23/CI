@@ -108,5 +108,26 @@
   })();
 
 </script>
+  function touchHandler(event) {
+    var touch = event.changedTouches[0];
+    var simulatedEvent = new MouseEvent({
+      touchstart: "mousedown",
+      touchmove: "mousemove",
+      touchend: "mouseup"
+    }[event.type], {
+      bubbles: true,
+      cancelable: true,
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    });
+    touch.target.dispatchEvent(simulatedEvent);
+    event.preventDefault();
+  }
+
+  var canvas = document.getElementById('sigma-canvas');
+  canvas.addEventListener("touchstart", touchHandler, { passive: false });
+  canvas.addEventListener("touchmove", touchHandler, { passive: false });
+  canvas.addEventListener("touchend", touchHandler, { passive: false });
+</script>
 </body>
 </html>
