@@ -325,14 +325,15 @@ function configSigmaElements(config) {
 		$GP.search.clean();
     }
 // ---- TOUCH SUPPORT ----
-    var sigmaMouseLayer = sigInst._core.container.getElementsByTagName('canvas');
-    var topLayer = sigmaMouseLayer[sigmaMouseLayer.length - 1];
+    var sigmaCanvases = sigInst._core.container.getElementsByTagName('canvas');
+    var topLayer = sigmaCanvases[sigmaCanvases.length - 1];
 
     var lastTouchDistance = null;
-    var touchStartX = 0;
-    var touchStartY = 0;
+    var dragLastX = 0, dragLastY = 0;
+    var touchStartX = 0, touchStartY = 0;
+    var isDragging = false;
     var touchMoved = false;
-    var DRAG_THRESHOLD = 8; // pixels of movement before it counts as a drag
+    var DRAG_THRESHOLD = 6;
 
     function getTouchDistance(touches) {
         var dx = touches[0].clientX - touches[1].clientX;
@@ -340,59 +341,73 @@ function configSigmaElements(config) {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    function dispatchMouse(type, touch) {
-        var mouseEvent = new MouseEvent(type, {
-            bubbles: true, cancelable: true, view: window,
-            screenX: touch.screenX, screenY: touch.screenY,
-            clientX: touch.clientX, clientY: touch.clientY
-        });
-        topLayer.dispatchEvent(mouseEvent); // Always dispatch on topLayer, not touch.target
-    }
-
-    topLayer.addEventListener('touchstart', function(event) {
-        event.preventDefault();
-        if (event.touches.length === 1) {
-            var touch = event.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
+    topLayer.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+            var touch = e.touches[0];
+            touchStartX = dragLastX = touch.clientX;
+            touchStartY = dragLastY = touch.clientY;
             touchMoved = false;
-            dispatchMouse('mousedown', touch);
-        } else if (event.touches.length === 2) {
-            lastTouchDistance = getTouchDistance(event.touches);
+            isDragging = true;
+        } else if (e.touches.length === 2) {
+            isDragging = false;
+            lastTouchDistance = getTouchDistance(e.touches);
         }
     }, { passive: false });
 
-    topLayer.addEventListener('touchmove', function(event) {
-        event.preventDefault();
-        if (event.touches.length === 1) {
-            var touch = event.touches[0];
-            var dx = touch.clientX - touchStartX;
-            var dy = touch.clientY - touchStartY;
-            if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+    topLayer.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        if (e.touches.length === 1 && isDragging) {
+            var touch = e.touches[0];
+            var dx = touch.clientX - dragLastX;
+            var dy = touch.clientY - dragLastY;
+
+            if (Math.abs(touch.clientX - touchStartX) > DRAG_THRESHOLD ||
+                Math.abs(touch.clientY - touchStartY) > DRAG_THRESHOLD) {
                 touchMoved = true;
             }
-            dispatchMouse('mousemove', touch);
-        } else if (event.touches.length === 2) {
-            var newDistance = getTouchDistance(event.touches);
+
+            // Directly move Sigma's camera instead of simulating mouse events
+            var mc = sigInst._core.mousecaptor;
+            mc.oxcam += dx;
+            mc.oycam += dy;
+            sigInst.draw(2, 2, 2, 2);
+
+            dragLastX = touch.clientX;
+            dragLastY = touch.clientY;
+
+        } else if (e.touches.length === 2) {
+            var newDist = getTouchDistance(e.touches);
             if (lastTouchDistance) {
-                var ratio = newDistance / lastTouchDistance;
+                var ratio = newDist / lastTouchDistance;
                 var core = sigInst._core;
-                var cx = (event.touches[0].clientX + event.touches[1].clientX) / 2;
-                var cy = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+                var rect = topLayer.getBoundingClientRect();
+                var cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                var cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
                 sigInst.zoomTo(cx, cy, core.mousecaptor.ratio * ratio);
             }
-            lastTouchDistance = newDistance;
+            lastTouchDistance = newDist;
         }
     }, { passive: false });
 
-    topLayer.addEventListener('touchend', function(event) {
-        event.preventDefault();
+    topLayer.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        isDragging = false;
         lastTouchDistance = null;
-        var touch = event.changedTouches[0];
-        dispatchMouse('mouseup', touch);
-        // Only fire a click if the finger barely moved (it's a tap, not a drag)
-        if (!touchMoved) {
-            dispatchMouse('click', touch);
+
+        // Only fire click events on a short tap (not after dragging)
+        if (!touchMoved && e.changedTouches.length === 1) {
+            var touch = e.changedTouches[0];
+            topLayer.dispatchEvent(new MouseEvent('mousedown', {
+                bubbles: true, cancelable: true, view: window,
+                screenX: touch.screenX, screenY: touch.screenY,
+                clientX: touch.clientX, clientY: touch.clientY
+            }));
+            topLayer.dispatchEvent(new MouseEvent('mouseup', {
+                bubbles: true, cancelable: true, view: window,
+                screenX: touch.screenX, screenY: touch.screenY,
+                clientX: touch.clientX, clientY: touch.clientY
+            }));
         }
         touchMoved = false;
     }, { passive: false });
