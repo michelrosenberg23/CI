@@ -1,0 +1,53 @@
+{
+  "type": "network",
+  "version": "1.0",
+  "data": "data.json",
+  "logo": {
+    "file": "",
+    "link": "",
+    "text": ""
+  },
+  "text": {
+    "more": "Example",
+    "intro": "Example\t\t",
+    "title": ""
+  },
+  "legend": {
+    "edgeLabel": "Connections",
+    "colorLabel": "Sector",
+    "nodeLabel": "Companies"
+  },
+  "features": {
+    "search": false,
+    "groupSelectorAttribute": "sector",
+    "hoverBehavior": "dim"
+  },
+  "informationPanel": {
+    "groupByEdgeDirection": true,
+    "imageAttribute": "sector"
+  },
+  "sigma": {
+    "drawingProperties": {
+      "defaultEdgeType": "straight",
+      "defaultHoverLabelBGColor": "#002147",
+      "defaultLabelBGColor": "#ddd",
+      "activeFontStyle": "bold",
+      "defaultLabelColor": "#000",
+      "labelThreshold": 50,
+      "defaultLabelHoverColor": "#fff",
+      "fontStyle": "bold",
+      "hoverFontStyle": "bold",
+      "defaultLabelSize": 14
+    },
+    "graphProperties": {
+      "maxEdgeSize": 2,
+      "minEdgeSize": 4,
+      "minNodeSize": 5,
+      "maxNodeSize": 20
+    },
+    "mouseProperties": {
+      "maxRatio": 50,
+      "minRatio": 0.75
+    }
+  }
+}
