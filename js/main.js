@@ -324,7 +324,68 @@ function configSigmaElements(config) {
         $GP.search.exactMatch = !0, $GP.search.search(a)
 		$GP.search.clean();
     }
+// ---- TOUCH SUPPORT ----
+    var sigmaMouseLayer = sigInst._core.container.getElementsByTagName('canvas');
+    var topLayer = sigmaMouseLayer[sigmaMouseLayer.length - 1]; // topmost canvas
 
+    var lastTouchDistance = null;
+
+    function getTouchDistance(touches) {
+        var dx = touches[0].clientX - touches[1].clientX;
+        var dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    topLayer.addEventListener('touchstart', function(event) {
+        if (event.touches.length === 1) {
+            var touch = event.changedTouches[0];
+            var mouseEvent = new MouseEvent('mousedown', {
+                bubbles: true, cancelable: true, view: window,
+                screenX: touch.screenX, screenY: touch.screenY,
+                clientX: touch.clientX, clientY: touch.clientY
+            });
+            touch.target.dispatchEvent(mouseEvent);
+        } else if (event.touches.length === 2) {
+            lastTouchDistance = getTouchDistance(event.touches);
+        }
+        event.preventDefault();
+    }, { passive: false });
+
+    topLayer.addEventListener('touchmove', function(event) {
+        if (event.touches.length === 1) {
+            var touch = event.changedTouches[0];
+            var mouseEvent = new MouseEvent('mousemove', {
+                bubbles: true, cancelable: true, view: window,
+                screenX: touch.screenX, screenY: touch.screenY,
+                clientX: touch.clientX, clientY: touch.clientY
+            });
+            touch.target.dispatchEvent(mouseEvent);
+        } else if (event.touches.length === 2) {
+            var newDistance = getTouchDistance(event.touches);
+            if (lastTouchDistance) {
+                var ratio = newDistance / lastTouchDistance;
+                var core = sigInst._core;
+                var cx = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+                var cy = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+                sigInst.zoomTo(cx, cy, core.mousecaptor.ratio * ratio);
+            }
+            lastTouchDistance = newDistance;
+        }
+        event.preventDefault();
+    }, { passive: false });
+
+    topLayer.addEventListener('touchend', function(event) {
+        lastTouchDistance = null;
+        var touch = event.changedTouches[0];
+        var mouseEvent = new MouseEvent('mouseup', {
+            bubbles: true, cancelable: true, view: window,
+            screenX: touch.screenX, screenY: touch.screenY,
+            clientX: touch.clientX, clientY: touch.clientY
+        });
+        touch.target.dispatchEvent(mouseEvent);
+        event.preventDefault();
+    }, { passive: false });
+    // ---- END TOUCH SUPPORT ----
 }
 
 function Search(a) {
