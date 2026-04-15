@@ -367,12 +367,12 @@ function configSigmaElements(config) {
                 touchMoved = true;
             }
 
-            // Directly move Sigma's camera instead of simulating mouse events
+        // Directly move Sigma's camera using correct property names
             var mc = sigInst._core.mousecaptor;
-            mc.oxcam += dx;
-            mc.oycam += dy;
+            mc.stageX += dx;
+            mc.stageY += dy;
             sigInst.draw(2, 2, 2, 2);
-
+			
             dragLastX = touch.clientX;
             dragLastY = touch.clientY;
 
