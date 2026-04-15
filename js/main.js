@@ -371,6 +371,7 @@ function configSigmaElements(config) {
             var mc = sigInst._core.mousecaptor;
             mc.stageX += dx;
             mc.stageY += dy;
+			mc.isTouchDown = true;  // keep Sigma's internal state in sync
             sigInst.draw(2, 2, 2, 2);
 			
             dragLastX = touch.clientX;
@@ -393,6 +394,7 @@ function configSigmaElements(config) {
     topLayer.addEventListener('touchend', function(e) {
         e.preventDefault();
         isDragging = false;
+		sigInst._core.mousecaptor.isTouchDown = false;
         lastTouchDistance = null;
 
         // Only fire click events on a short tap (not after dragging)
