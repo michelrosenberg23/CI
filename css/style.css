@@ -575,3 +575,6 @@ cursor: pointer;
 display: none;
 }
 
+#sigma-canvas {
+  touch-action: none;
+}
